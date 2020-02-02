@@ -2,14 +2,22 @@ const MongoClient = require("mongodb");
 const sensor = require("node-dht-sensor").promises;
 const { mongoUser, mongoPassword, mongoURI } = require("./keys_dev.js");
 
-sensor.initialize({
-  test: {
-    fake: {
-      temperature: 20,
-      humidity: 30
+var env = process.env.ENV;
+const isDevEnv = env === 'dev';
+if (isDevEnv) {
+  sensor.initialize({
+    test: {
+      fake: {
+        temperature: 20,
+        humidity: 30
+      }
     }
-  }
-});
+  });
+}
+
+const eachMinute = 10000;
+const sensorFetchInterval = eachMinute;
+
 
 MongoClient.connect(mongoURI, { useNewUrlParser: true }, (err, db) => {
   if (err) {
@@ -37,7 +45,7 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true }, (err, db) => {
   //   console.log("1 document deleted");
   //   db.close();
   // });
-  setInterval(() => readSaveRoutine(db), 2000);
+  setInterval(() => readSaveRoutine(db), eachMinute);
 });
 
 const readSaveRoutine = async db => {
@@ -50,7 +58,7 @@ const readSaveRoutine = async db => {
     timeStamp,
     temperature,
     humidity,
-    env: "test"
+    env: isDevEnv ? "test" : ''
   };
 
   const dbo = db.db("SensorData");
@@ -65,8 +73,8 @@ const readDHT11 = async () => {
   try {
     const res = await sensor.read(11, 4);
     console.log(
-      `temp: ${res.temperature.toFixed(1)}°C, ` +
-        `humidity: ${res.humidity.toFixed(1)}%`
+      `temp: ${res.temperature}°C, ` +
+      `humidity: ${res.humidity}%`
     );
     return res;
   } catch (err) {

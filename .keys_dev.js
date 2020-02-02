@@ -1,4 +1,4 @@
-// rename it to keys_dev.js
+// copy and rename this file as keys_dev.js
 // insert credentials
 
 const mongoUser = "";
